@@ -1,0 +1,90 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3'
+        classpath 'pl.allegro.tech.build:axion-release-plugin:1.2.3'
+        classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3'
+    }
+}
+
+apply plugin: 'groovy'
+apply plugin: 'pl.allegro.tech.build.axion-release'
+apply plugin: 'com.bmuschko.nexus'
+apply plugin: 'io.codearte.nexus-staging'
+
+scmVersion {
+    tag {
+        prefix = 'release'
+        versionSeparator = '/'
+    }
+    createReleaseCommit = true
+    releaseCommitMessage { version, position -> "Release version: ${version}\n\n[ci skip]" }
+    hooks {
+        pre 'fileUpdate', [file: 'README.md', pattern: {v, p -> /"info\.solidsoft\.gradle:gradle-template:.*"/},
+                           replacement: {v, p -> "\"info.solidsoft.gradle:gradle-template:$v\""}]
+    }
+}
+
+project.group = "info.solidsoft.gradle"
+project.version = scmVersion.version
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.4.4'
+
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testCompile 'junit:junit:4.12'
+}
+
+nexusStaging {
+    packageGroup = "info.solidsoft"
+    stagingProfileId = "34a3a5beeaa96"
+}
+
+modifyPom {
+    project {
+        name 'Gradle template'
+        description 'Gradle template'
+        url 'https://github.com/szpak/gradle-template'
+        inceptionYear '2015'
+
+        scm {
+            url 'https://github.com/szpak/gradle-template'
+            connection 'scm:https://github.com/szpak/gradle-template'
+            developerConnection 'scm:git://github.com/szpak/gradle-template'
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'szpak'
+                name 'Marcin Zajączkowski'
+                email 'mszpak ATT wp DOTT pl'
+                roles {
+                    role 'developer'
+                    role 'despot'
+                }
+            }
+        }
+    }
+}
+
+uploadArchives.dependsOn { check }
+
+wrapper {
+    gradleVersion "2.8"
+}
